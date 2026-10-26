@@ -26,6 +26,8 @@ export const Card3RealtimeMetrics: React.FC = () => {
     saveCurrentMeasurementToResident,
     simulateMeasurement,
     setActiveTab,
+    autoSaveOnIot,
+    setAutoSaveOnIot,
   } = usePosyandu();
 
   const [isSavedFeedback, setIsSavedFeedback] = useState(false);
@@ -295,8 +297,35 @@ export const Card3RealtimeMetrics: React.FC = () => {
         </div>
       </div>
 
+      {/* Opsi Auto-Save Otomatis Real-time Tanpa Refresh */}
+      <div className="mt-4 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse flex-shrink-0"></span>
+          <div>
+            <span className="text-xs font-bold text-slate-800 block">
+              Auto-Save Real-Time dari IoT
+            </span>
+            <span className="text-[10px] text-slate-500 block">
+              Simpan langsung ke riwayat &amp; grafik pasien saat alat IoT mengirim (tanpa refresh)
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setAutoSaveOnIot(!autoSaveOnIot)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex-shrink-0 ${
+            autoSaveOnIot
+              ? 'bg-[#0D5C46] text-white border-[#0D5C46] shadow-2xs'
+              : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          {autoSaveOnIot ? '✓ AKTIF (Otomatis)' : 'Manual (Klik Simpan)'}
+        </button>
+      </div>
+
       {/* Tombol Simpan Hasil Ukur ke Riwayat Warga */}
-      <div className="mt-4">
+      <div className="mt-3">
         <button
           type="button"
           onClick={handleSave}

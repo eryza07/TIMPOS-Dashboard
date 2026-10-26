@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   Resident, 
   ResidentCategory, 
@@ -48,6 +48,8 @@ interface PosyanduContextType {
   updateMqttConfig: (newConfig: MqttConfig) => void;
   publishSetMode: (mode: ResidentCategory) => boolean;
   publishRemoteMeasure: () => boolean;
+  autoSaveOnIot: boolean;
+  setAutoSaveOnIot: (val: boolean) => void;
   saveCurrentMeasurementToResident: () => void;
   addNewResident: (data: {
     name: string;
@@ -140,6 +142,25 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [chartMetric, setChartMetric] = useState<'BB' | 'TB'>('BB');
   const [activeTab, setActiveTab] = useState<ActiveMenuTab>('MEASUREMENT');
 
+  const [autoSaveOnIot, setAutoSaveOnIotState] = useState<boolean>(() => {
+    return localStorage.getItem('timpos_auto_save_iot') !== 'false';
+  });
+
+  const setAutoSaveOnIot = useCallback((val: boolean) => {
+    setAutoSaveOnIotState(val);
+    localStorage.setItem('timpos_auto_save_iot', val ? 'true' : 'false');
+  }, []);
+
+  const activeResidentRef = useRef(activeResident);
+  useEffect(() => {
+    activeResidentRef.current = activeResident;
+  }, [activeResident]);
+
+  const autoSaveRef = useRef(autoSaveOnIot);
+  useEffect(() => {
+    autoSaveRef.current = autoSaveOnIot;
+  }, [autoSaveOnIot]);
+
   // Trigger feedback notification
   const showActionToast = (msg: string) => {
     setLastActionMessage(msg);
@@ -173,7 +194,41 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setActiveModeState(inboundData.mode);
       }
 
-      showActionToast(`Data diterima dari ${inboundData.device_id}: TB ${inboundData.tb_cm} cm, BB ${inboundData.bb_kg} kg`);
+      // Fitur Otomatis: Langsung simpan ke riwayat & grafik pasien tanpa refresh
+      const targetRes = activeResidentRef.current;
+      if (targetRes && autoSaveRef.current && inboundData.tb_cm > 0 && inboundData.bb_kg > 0) {
+        const currentModeVal = inboundData.mode || targetRes.category;
+        const currentAgeVal = targetRes.ageValue;
+        const evaluation = evaluateNutritionStatus(currentModeVal, currentAgeVal, inboundData.tb_cm, inboundData.bb_kg);
+
+        const today = new Date().toISOString().split('T')[0];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const now = new Date();
+        const periodLabel = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+        const ageLabel = currentModeVal === 'BALITA' ? `${currentAgeVal} Thn` : `${currentAgeVal} Mgg`;
+
+        const newRecord: Omit<MeasurementRecord, 'id'> = {
+          date: today,
+          periodLabel,
+          ageValue: currentAgeVal,
+          ageLabel,
+          tb_cm: inboundData.tb_cm,
+          bb_kg: inboundData.bb_kg,
+          status: evaluation.status,
+          statusNote: `${evaluation.title}. ${evaluation.summary}`,
+        };
+
+        const updated = appendMeasurementToResident(targetRes.id, newRecord);
+        const recordWithId: MeasurementRecord = {
+          ...newRecord,
+          id: `rec-${targetRes.id.toLowerCase()}-${targetRes.records.length + 1}-${Date.now()}`,
+        };
+        addMeasurementRecord(targetRes.id, recordWithId);
+        setResidents(updated);
+        showActionToast(`Data ${inboundData.device_id} otomatis tersimpan ke riwayat ${targetRes.name}!`);
+      } else {
+        showActionToast(`Data diterima dari ${inboundData.device_id}: TB ${inboundData.tb_cm} cm, BB ${inboundData.bb_kg} kg`);
+      }
     });
 
     return () => {
@@ -460,6 +515,8 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateMqttConfig,
         publishSetMode,
         publishRemoteMeasure,
+        autoSaveOnIot,
+        setAutoSaveOnIot,
         saveCurrentMeasurementToResident,
         addNewResident,
         bulkAddResidents,
