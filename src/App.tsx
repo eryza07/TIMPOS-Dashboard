@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthPage } from './components/auth/AuthPage';
 import { PosyanduProvider, usePosyandu } from './context/PosyanduContext';
@@ -299,11 +300,13 @@ function AppRouter() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <>
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+      <Analytics />
+    </>
   );
 }
 
 export default App;
-
