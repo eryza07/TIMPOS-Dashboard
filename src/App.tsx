@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthPage } from './components/auth/AuthPage';
 import { PosyanduProvider, usePosyandu } from './context/PosyanduContext';
@@ -301,9 +302,9 @@ export function App() {
   return (
     <AuthProvider>
       <AppRouter />
+      <SpeedInsights />
     </AuthProvider>
   );
 }
 
 export default App;
-
