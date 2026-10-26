@@ -8,7 +8,6 @@ import {
   Baby, 
   Heart, 
   ChevronRight, 
-  RotateCcw,
   Users,
   Trash2
 } from 'lucide-react';
@@ -20,7 +19,6 @@ export const Card1ResidentList: React.FC = () => {
     activeResidentId, 
     setActiveResidentId, 
     addNewResident,
-    resetToDefaultData,
     deleteResident,
     clearAllResidents,
     setActiveTab
@@ -350,36 +348,26 @@ export const Card1ResidentList: React.FC = () => {
         )}
       </div>
 
-      {/* Footer Info & Reset Data */}
+      {/* Footer Info & Aksi Bersihkan */}
       <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
         <span>Menampilkan {filteredResidents.length} dari {residents.length} warga</span>
-        <div className="flex items-center gap-3">
-          {residents.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm('Kosongkan semua data warga untuk memulai pencatatan baru yang bersih?')) {
-                  clearAllResidents();
-                }
-              }}
-              className="text-red-500 hover:text-red-700 inline-flex items-center gap-1 hover:underline transition-colors"
-              title="Kosongkan semua data dan mulai dari nol"
-            >
-              <Trash2 className="w-3 h-3" />
-              Kosongkan Semua (Mulai Bersih)
-            </button>
-          )}
+        {residents.length > 0 && (
           <button
             type="button"
-            onClick={resetToDefaultData}
-            className="text-slate-400 hover:text-slate-600 inline-flex items-center gap-1 hover:underline transition-colors"
-            title="Muat kembali 5 data simulasi / contoh demo"
+            onClick={() => {
+              if (window.confirm('Kosongkan semua data warga untuk memulai pencatatan baru yang bersih?')) {
+                clearAllResidents();
+              }
+            }}
+            className="text-red-500 hover:text-red-700 inline-flex items-center gap-1 hover:underline transition-colors"
+            title="Kosongkan semua data dan mulai dari nol"
           >
-            <RotateCcw className="w-3 h-3" />
-            Reset Data Demo
+            <Trash2 className="w-3 h-3" />
+            Kosongkan Semua Data
           </button>
-        </div>
+        )}
       </div>
+
 
 
       {/* Modal Pendaftaran Warga Baru */}

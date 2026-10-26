@@ -96,33 +96,51 @@ WITH CHECK (
 );
 
 -- ==============================================================================
-
--- PANDUAN MENAMBAHKAN AKUN KADER OLEH ADMINISTRATOR
--- Karena pendaftaran mandiri (public register) ditutup demi keamanan:
--- 
--- 1. Buka Supabase Dashboard -> Authentication -> Users -> Klik "Add user" -> "Create user"
--- 2. Masukkan Email & Password yang Anda siapkan untuk Kader tersebut (contoh: kader.melati@posyandu.id)
--- 3. Salin User UID yang baru dibuat, lalu jalankan query di bawah ini di SQL Editor
---    untuk memberikan nama Posyandu dan wilayahnya:
---
---    INSERT INTO public.posyandu_profiles (
---        user_id,
---        posyandu_name,
---        kader_name,
---        rt_rw,
---        desa_kelurahan,
---        puskesmas_pembina,
---        mqtt_topic_data,
---        mqtt_topic_command
---    ) VALUES (
---        'PASTE-USER-UID-DISINI',
---        'Posyandu Melati 01',
---        'Ibu Siti Aminah',
---        'RT 02 / RW 05',
---        'Desa Sukamaju',
---        'Puskesmas Sukamaju',
---        'sic8/timpos/data',
---        'sic8/timpos/command'
---    );
+-- FITUR OTOMATIS: TRIGGER PEMBUATAN PROFIL SAAT USER DIBUAT DI AUTH
+-- Dengan trigger ini, setiap kali Anda membuat user baru di Authentication -> Users,
+-- profil Posyandu akan langsung terbuat otomatis!
 -- ==============================================================================
+
+CREATE OR REPLACE FUNCTION public.handle_new_posyandu_user()
+RETURNS trigger AS $$
+BEGIN
+    INSERT INTO public.posyandu_profiles (
+        user_id,
+        posyandu_name,
+        kader_name,
+        rt_rw,
+        desa_kelurahan,
+        puskesmas_pembina,
+        mqtt_topic_data,
+        mqtt_topic_command
+    ) VALUES (
+        new.id,
+        COALESCE(new.raw_user_meta_data->>'posyandu_name', 'Posyandu Kader Utama'),
+        COALESCE(new.raw_user_meta_data->>'kader_name', split_part(new.email, '@', 1)),
+        'RT 01 / RW 01',
+        'Desa Sukamaju',
+        'Puskesmas Pembina',
+        'sic8/timpos/data',
+        'sic8/timpos/command'
+    )
+    ON CONFLICT (user_id) DO NOTHING;
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_posyandu_user();
+
+-- ==============================================================================
+-- PANDUAN PRAKTIS MEMBUAT AKUN DI SUPABASE DASHBOARD:
+-- 1. Buka Supabase Dashboard -> Authentication -> Users
+-- 2. Klik tombol "Add user" -> Pilih "Create user"
+-- 3. Masukkan Email (misal: kader1@posyandu.id) dan Password
+-- 4. Akun langsung aktif! Profil Posyandu akan otomatis terisi oleh trigger di atas.
+-- 5. Jika ingin mengubah nama Posyandu/Kader secara spesifik, Anda bisa mengeditnya
+--    langsung di Table Editor -> posyandu_profiles.
+-- ==============================================================================
+
 

@@ -7,13 +7,13 @@ import {
   ArrowRight, 
   AlertCircle,
   Database,
-  Sparkles,
   KeyRound,
   Info
 } from 'lucide-react';
 
 export const AuthPage: React.FC = () => {
-  const { login, loginAsDemo, isSupabaseConfigured } = useAuth();
+  const { login, isSupabaseConfigured } = useAuth();
+
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -142,44 +142,9 @@ export const AuthPage: React.FC = () => {
                 Pendaftaran akun dikelola secara terpusat. Hubungi Administrator / Bidan Desa jika Anda belum memiliki akun atau lupa kata sandi.
               </span>
             </div>
-
-            {/* Tombol Demo Cepat (1-Click Login untuk Pengujian Localhost) */}
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 mb-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Akun Posyandu Siap Pakai (Uji Coba Langsung)</span>
-              </div>
-              <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
-                Klik salah satu akun di bawah untuk langsung mencoba dashboard masing-masing Posyandu:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => loginAsDemo('melati')}
-                  className="p-2.5 bg-emerald-50/70 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-left transition-colors flex items-center justify-between group"
-                >
-                  <div>
-                    <span className="text-xs font-bold text-[#0D5C46] block">Posyandu Melati 01</span>
-                    <span className="text-[10px] text-slate-500">RT 02/RW 05 Sukamaju</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#0D5C46] group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => loginAsDemo('mawar')}
-                  className="p-2.5 bg-rose-50/70 hover:bg-rose-100 border border-rose-200 rounded-xl text-left transition-colors flex items-center justify-between group"
-                >
-                  <div>
-                    <span className="text-xs font-bold text-rose-800 block">Posyandu Mawar 02</span>
-                    <span className="text-[10px] text-slate-500">RT 04/RW 02 Mekarjaya</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-rose-700 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-            </div>
           </div>
         </div>
+
 
         {/* Petunjuk Setup Supabase .env */}
         <div className="mt-5 p-3.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-600 shadow-2xs">

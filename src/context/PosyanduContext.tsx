@@ -73,7 +73,7 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // 1. Data residents
   const [residents, setResidents] = useState<Resident[]>(() => getStoredResidents());
   const [activeResidentId, setActiveResidentIdState] = useState<string>(() => {
-    return residents[0]?.id || 'BLT-01';
+    return residents[0]?.id || '';
   });
 
   // Sinkronisasi data warga dari Supabase / Profil Posyandu
@@ -109,8 +109,8 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return {
       mode: activeResident?.category || 'BALITA',
       ageValue: activeResident?.ageValue || 4,
-      tb_cm: latestRec?.tb_cm || 98.5,
-      bb_kg: latestRec?.bb_kg || 14.8,
+      tb_cm: latestRec?.tb_cm || 0,
+      bb_kg: latestRec?.bb_kg || 0,
       source: 'IOT',
       lastUpdated: new Date().toLocaleTimeString('id-ID'),
     };
@@ -258,7 +258,10 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // 12. Simpan Hasil Ukur ke Riwayat Warga
   const saveCurrentMeasurementToResident = useCallback(() => {
-    if (!activeResident) return;
+    if (!activeResident) {
+      showActionToast('Pilih atau daftarkan warga terlebih dahulu sebelum menyimpan hasil ukur.');
+      return;
+    }
 
     const today = new Date().toISOString().split('T')[0];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
