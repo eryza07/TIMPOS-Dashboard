@@ -1,0 +1,202 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { 
+  ShieldCheck, 
+  Lock, 
+  Mail, 
+  ArrowRight, 
+  AlertCircle,
+  Database,
+  Sparkles,
+  KeyRound,
+  Info
+} from 'lucide-react';
+
+export const AuthPage: React.FC = () => {
+  const { login, loginAsDemo, isSupabaseConfigured } = useAuth();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // State Form Login
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setIsLoading(true);
+
+    try {
+      const res = await login(loginEmail, loginPassword);
+      if (!res.success) {
+        setErrorMessage(res.error || 'Email atau kata sandi tidak cocok. Silakan periksa kembali.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Terjadi kesalahan saat masuk.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between py-10 px-4 sm:px-6 font-sans">
+      <div className="max-w-md w-full mx-auto">
+        {/* Brand & Logo Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0D5C46] text-white shadow-md mb-3 border-2 border-emerald-300">
+            <ShieldCheck className="w-8 h-8 text-emerald-100" />
+          </div>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">TIMPOS</h1>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-[#0D5C46] border border-emerald-300">
+              KEMENKES RI
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto">
+            Portal Digital Kader &amp; Pemantauan Alat Ukur IoT Timbangan 2-in-1 Posyandu
+          </p>
+
+          {/* Status Badge Supabase */}
+          <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-white border border-slate-200 text-slate-600 shadow-2xs">
+            <Database className={`w-3.5 h-3.5 ${isSupabaseConfigured ? 'text-emerald-600' : 'text-amber-500'}`} />
+            <span>
+              {isSupabaseConfigured ? 'Database Cloud Supabase Terhubung' : 'Mode Offline / Local Auth Aktif'}
+            </span>
+          </div>
+        </div>
+
+        {/* Card Utama Login Saja (Registrasi Dihapus Sesuai Permintaan) */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Header Card Login */}
+          <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-200">
+            <h2 className="text-sm font-bold text-slate-900 leading-none">
+              Masuk ke Dashboard Posyandu
+            </h2>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Gunakan email &amp; kata sandi yang telah disiapkan Administrator
+            </p>
+          </div>
+
+          <div className="p-6">
+            {/* Feedback Pesan Error */}
+            {errorMessage && (
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* FORM LOGIN */}
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Email Akun Posyandu / Kader
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="kader@posyandudigital.id"
+                    className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D5C46] focus:border-transparent text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Kata Sandi
+                  </label>
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                  <input
+                    type="password"
+                    required
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D5C46] focus:border-transparent text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-2 py-2.5 px-4 bg-[#0D5C46] hover:bg-[#094434] active:scale-98 text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all min-h-[44px] disabled:opacity-50"
+              >
+                {isLoading ? 'Sedang Memeriksa Akun...' : 'Masuk ke Dashboard Posyandu'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+
+            {/* Catatan Akses Terbatas untuk Kader */}
+            <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-2 text-[11px] text-slate-500">
+              <Info className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+              <span>
+                Pendaftaran akun dikelola secara terpusat. Hubungi Administrator / Bidan Desa jika Anda belum memiliki akun atau lupa kata sandi.
+              </span>
+            </div>
+
+            {/* Tombol Demo Cepat (1-Click Login untuk Pengujian Localhost) */}
+            <div className="mt-6 pt-5 border-t border-slate-100">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 mb-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Akun Posyandu Siap Pakai (Uji Coba Langsung)</span>
+              </div>
+              <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                Klik salah satu akun di bawah untuk langsung mencoba dashboard masing-masing Posyandu:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => loginAsDemo('melati')}
+                  className="p-2.5 bg-emerald-50/70 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-left transition-colors flex items-center justify-between group"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-[#0D5C46] block">Posyandu Melati 01</span>
+                    <span className="text-[10px] text-slate-500">RT 02/RW 05 Sukamaju</span>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#0D5C46] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => loginAsDemo('mawar')}
+                  className="p-2.5 bg-rose-50/70 hover:bg-rose-100 border border-rose-200 rounded-xl text-left transition-colors flex items-center justify-between group"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-rose-800 block">Posyandu Mawar 02</span>
+                    <span className="text-[10px] text-slate-500">RT 04/RW 02 Mekarjaya</span>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-rose-700 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Petunjuk Setup Supabase .env */}
+        <div className="mt-5 p-3.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-600 shadow-2xs">
+          <div className="flex items-center gap-2 font-semibold text-slate-800 mb-1">
+            <KeyRound className="w-4 h-4 text-[#0D5C46]" />
+            <span>Kredensial Database Cloud (.env)</span>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            Data login akun dihubungkan ke Supabase via file <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800 font-mono">.env</code>. File ini sudah aman dan tidak akan ter-upload ke GitHub.
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-8 text-center text-xs text-slate-400">
+        &copy; 2026 TIMPOS &bull; Timbangan &amp; Pengukur Tinggi Posyandu Digital 2-in-1
+      </footer>
+    </div>
+  );
+};

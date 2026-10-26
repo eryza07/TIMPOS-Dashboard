@@ -1,0 +1,175 @@
+import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { Resident, MeasurementRecord, ResidentCategory } from '../types';
+import { 
+  getStoredResidents, 
+  saveStoredResidents, 
+  addNewResident as addLocalResident, 
+  appendMeasurementToResident as appendLocalMeasurement,
+  deleteStoredResident as deleteLocalResident
+} from './storageService';
+
+
+/**
+ * Mengambil daftar warga posyandu dari Supabase (atau fallback ke local storage)
+ */
+export async function getResidentsData(posyanduId?: string): Promise<Resident[]> {
+  if (isSupabaseConfigured && supabase && posyanduId) {
+    try {
+      const { data: residentsData, error: resErr } = await supabase
+        .from('residents')
+        .select(`
+          id,
+          name,
+          category,
+          age_value,
+          guardian_name,
+          created_at,
+          last_measured_date,
+          measurements (*)
+        `)
+        .eq('posyandu_id', posyanduId)
+        .order('name');
+
+      if (resErr) {
+        console.warn('[DB] Gagal ambil residents dari Supabase, pakai local:', resErr);
+      } else if (residentsData) {
+        const mapped: Resident[] = residentsData.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          category: r.category as ResidentCategory,
+          ageValue: Number(r.age_value),
+          guardianName: r.guardian_name,
+          createdAt: r.created_at,
+          lastMeasuredDate: r.last_measured_date,
+          records: (r.measurements || []).map((m: any) => ({
+            id: m.id,
+            date: m.date,
+            periodLabel: m.period_label,
+            ageValue: Number(m.age_value),
+            ageLabel: m.age_label,
+            tb_cm: Number(m.tb_cm),
+            bb_kg: Number(m.bb_kg),
+            status: m.status,
+            statusNote: m.status_note,
+          })).sort((a: MeasurementRecord, b: MeasurementRecord) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+        }));
+
+        // Simpan salinan ke localStorage untuk offline cache
+        saveStoredResidents(mapped);
+        return mapped;
+      }
+    } catch (e) {
+      console.error('[DB] Exception saat query Supabase:', e);
+    }
+  }
+
+  return getStoredResidents();
+}
+
+/**
+ * Menyimpan warga baru ke Supabase & Local
+ */
+export async function createResidentRecord(
+  posyanduId: string | undefined,
+  resident: Resident
+): Promise<Resident> {
+  if (isSupabaseConfigured && supabase && posyanduId) {
+    try {
+      const { error: resErr } = await supabase.from('residents').insert({
+        id: resident.id,
+        posyandu_id: posyanduId,
+        name: resident.name,
+        category: resident.category,
+        age_value: resident.ageValue,
+        guardian_name: resident.guardianName,
+        created_at: resident.createdAt,
+        last_measured_date: resident.lastMeasuredDate,
+      });
+
+      if (resErr) {
+        console.error('[DB] Gagal insert warga ke Supabase:', resErr);
+      }
+
+      // Masukkan pengukuran perdana jika ada
+      if (resident.records.length > 0) {
+        const rec = resident.records[0];
+        await supabase.from('measurements').insert({
+          id: rec.id,
+          resident_id: resident.id,
+          date: rec.date,
+          period_label: rec.periodLabel,
+          age_value: rec.ageValue,
+          age_label: rec.ageLabel,
+          tb_cm: rec.tb_cm,
+          bb_kg: rec.bb_kg,
+          status: rec.status,
+          status_note: rec.statusNote,
+        });
+      }
+    } catch (e) {
+      console.error('[DB] Exception creating resident:', e);
+    }
+  }
+
+  // Tetap sinkronkan ke local
+  addLocalResident({
+    name: resident.name,
+    category: resident.category,
+    ageValue: resident.ageValue,
+    guardianName: resident.guardianName,
+    initialTb: resident.records[0]?.tb_cm || 0,
+    initialBb: resident.records[0]?.bb_kg || 0,
+  });
+
+  return resident;
+}
+
+/**
+ * Menambahkan catatan ukur baru ke Supabase & Local
+ */
+export async function addMeasurementRecord(
+  residentId: string,
+  record: MeasurementRecord
+): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from('measurements').insert({
+        id: record.id,
+        resident_id: residentId,
+        date: record.date,
+        period_label: record.periodLabel,
+        age_value: record.ageValue,
+        age_label: record.ageLabel,
+        tb_cm: record.tb_cm,
+        bb_kg: record.bb_kg,
+        status: record.status,
+        status_note: record.statusNote,
+      });
+
+      // Update tanggal ukur terakhir di tabel resident
+      await supabase
+        .from('residents')
+        .update({ last_measured_date: record.date, age_value: record.ageValue })
+        .eq('id', residentId);
+    } catch (e) {
+      console.error('[DB] Exception saving measurement to Supabase:', e);
+    }
+  }
+
+  appendLocalMeasurement(residentId, record);
+}
+
+/**
+ * Menghapus warga dari Supabase & Local
+ */
+export async function deleteResidentRecord(residentId: string): Promise<void> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from('residents').delete().eq('id', residentId);
+    } catch (e) {
+      console.error('[DB] Exception deleting resident from Supabase:', e);
+    }
+  }
+
+  deleteLocalResident(residentId);
+}
