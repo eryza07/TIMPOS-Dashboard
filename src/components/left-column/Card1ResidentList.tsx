@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { usePosyandu } from '../../context/PosyanduContext';
 import { NewResidentModal } from './NewResidentModal';
+import { ExcelImportModal } from './ExcelImportModal';
 import { 
   Search, 
   X, 
@@ -9,7 +10,8 @@ import {
   Heart, 
   ChevronRight, 
   Users,
-  Trash2
+  Trash2,
+  FileSpreadsheet
 } from 'lucide-react';
 import { ResidentCategory } from '../../types';
 
@@ -19,16 +21,16 @@ export const Card1ResidentList: React.FC = () => {
     activeResidentId, 
     setActiveResidentId, 
     addNewResident,
+    bulkAddResidents,
     deleteResident,
     clearAllResidents,
     setActiveTab
   } = usePosyandu();
 
-
-
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<'ALL' | ResidentCategory>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
 
   // Filter residents based on search and category
   const filteredResidents = useMemo(() => {
@@ -98,29 +100,41 @@ export const Card1ResidentList: React.FC = () => {
       className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-5 transition-all"
     >
       {/* Header Kartu */}
-      <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-slate-100 gap-3">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#0D5C46] flex items-center justify-center border border-emerald-200">
             <Users className="w-4 h-4 text-[#0D5C46]" />
           </div>
           <div>
             <h2 className="text-sm font-bold text-slate-900 leading-none">
-              Kartu 1: Cari &amp; Daftar Warga
+              Data Warga Posyandu
             </h2>
             <p className="text-[11px] text-slate-500 mt-1">
-              Pilih warga yang sedang naik ke timbangan IoT
+              Daftar balita, ibu hamil, &amp; data pasien timbangan IoT
             </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] active:scale-95 rounded-lg shadow-sm transition-all min-h-[40px] flex-shrink-0"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>+ Warga Baru</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsExcelModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 active:scale-95 border border-emerald-300 rounded-lg shadow-2xs transition-all min-h-[40px]"
+            title="Import data banyak warga sekaligus dari file Excel (.xlsx / .csv)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-[#0D5C46]" />
+            <span>Import Excel / CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] active:scale-95 rounded-lg shadow-sm transition-all min-h-[40px] flex-shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>+ Warga Baru</span>
+          </button>
+        </div>
       </div>
 
       {/* Input Search Real-Time */}
@@ -318,14 +332,24 @@ export const Card1ResidentList: React.FC = () => {
             <p className="text-[11px] text-slate-400 mt-0.5">
               Data demo telah dibersihkan. Siap untuk mengisi data riil Posyandu.
             </p>
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] rounded-lg shadow-sm transition-colors"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              + Daftarkan Warga Baru
-            </button>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsExcelModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0D5C46] bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-300 rounded-lg shadow-2xs transition-colors"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-[#0D5C46]" />
+                <span>Import dari Excel / CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] rounded-lg shadow-sm transition-colors"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                + Daftarkan Manual
+              </button>
+            </div>
           </div>
         ) : (
           <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
@@ -375,6 +399,13 @@ export const Card1ResidentList: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={addNewResident}
+      />
+
+      {/* Modal Import Excel / CSV */}
+      <ExcelImportModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        onImportSuccess={bulkAddResidents}
       />
     </section>
   );

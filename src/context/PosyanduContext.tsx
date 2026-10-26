@@ -14,7 +14,8 @@ import {
   appendMeasurementToResident, 
   resetResidentsToDefault as resetStoredResidents,
   deleteStoredResident,
-  clearAllStoredResidents
+  clearAllStoredResidents,
+  bulkAddStoredResidents
 } from '../services/storageService';
 import { 
   getResidentsData, 
@@ -56,6 +57,14 @@ interface PosyanduContextType {
     initialTb: number;
     initialBb: number;
   }) => Resident;
+  bulkAddResidents: (items: {
+    name: string;
+    category: ResidentCategory;
+    ageValue: number;
+    guardianName: string;
+    initialTb: number;
+    initialBb: number;
+  }[]) => void;
   resetToDefaultData: () => void;
   deleteResident: (id: string) => void;
   clearAllResidents: () => void;
@@ -316,7 +325,31 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
     showActionToast(`Warga baru ${created.name} (${created.id}) berhasil didaftarkan!`);
     return created;
-  }, []);
+  }, [profile?.id]);
+
+  // 13b. Bulk Add Warga dari Excel/CSV
+  const bulkAddResidents = useCallback((items: {
+    name: string;
+    category: ResidentCategory;
+    ageValue: number;
+    guardianName: string;
+    initialTb: number;
+    initialBb: number;
+  }[]) => {
+    const createdResidents = bulkAddStoredResidents(items);
+    for (const resident of createdResidents) {
+      createResidentRecord(profile?.id, resident);
+    }
+    const refreshed = getStoredResidents();
+    setResidents(refreshed);
+    if (createdResidents.length > 0) {
+      const first = createdResidents[0];
+      setActiveResidentIdState(first.id);
+      setActiveModeState(first.category);
+      setAgeValue(first.ageValue);
+    }
+    showActionToast(`Berhasil mengimpor ${createdResidents.length} data warga dari file Excel!`);
+  }, [profile?.id]);
 
   // 14. Reset Data ke Default
   const resetToDefaultData = useCallback(() => {
@@ -429,6 +462,7 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         publishRemoteMeasure,
         saveCurrentMeasurementToResident,
         addNewResident,
+        bulkAddResidents,
         resetToDefaultData,
         deleteResident,
         clearAllResidents,

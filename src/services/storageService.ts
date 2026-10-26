@@ -112,6 +112,67 @@ export const addNewResident = (newResidentData: {
 };
 
 /**
+ * Menambahkan daftar warga secara massal (Bulk Import dari Excel / CSV).
+ */
+export const bulkAddStoredResidents = (newResidentsData: {
+  name: string;
+  category: ResidentCategory;
+  ageValue: number;
+  guardianName: string;
+  initialTb: number;
+  initialBb: number;
+}[]): Resident[] => {
+  const currentList = getStoredResidents();
+  const today = new Date().toISOString().split('T')[0];
+
+  const addedList: Resident[] = [];
+  let existingBalitaCount = currentList.filter((r) => r.category === 'BALITA').length;
+  let existingIbuCount = currentList.filter((r) => r.category === 'IBU_HAMIL').length;
+
+  for (const item of newResidentsData) {
+    const isBalita = item.category === 'BALITA';
+    const prefix = isBalita ? 'BLT' : 'BML';
+    if (isBalita) {
+      existingBalitaCount++;
+    } else {
+      existingIbuCount++;
+    }
+    const count = isBalita ? existingBalitaCount : existingIbuCount;
+    const newId = `${prefix}-${String(count).padStart(2, '0')}`;
+
+    const ageLabel = isBalita ? `${item.ageValue} Thn` : `${item.ageValue} Mgg`;
+    const initialRecord: MeasurementRecord = {
+      id: `rec-${newId.toLowerCase()}-1`,
+      date: today,
+      periodLabel: 'Pemeriksaan Awal',
+      ageValue: item.ageValue,
+      ageLabel: ageLabel,
+      tb_cm: item.initialTb,
+      bb_kg: item.initialBb,
+      status: 'NORMAL',
+      statusNote: 'Import dari file Excel/CSV data posyandu',
+    };
+
+    const newResident: Resident = {
+      id: newId,
+      name: item.name,
+      category: item.category,
+      ageValue: item.ageValue,
+      guardianName: item.guardianName,
+      createdAt: today,
+      lastMeasuredDate: today,
+      records: [initialRecord],
+    };
+
+    addedList.push(newResident);
+  }
+
+  const updatedList = [...addedList, ...currentList];
+  saveStoredResidents(updatedList);
+  return addedList;
+};
+
+/**
  * Menambahkan riwayat pemeriksaan baru ke seorang warga.
  */
 export const appendMeasurementToResident = (

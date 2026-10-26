@@ -34,8 +34,8 @@ export const NavigationTabs: React.FC = () => {
     },
     {
       id: 'RESIDENTS',
-      label: 'Buku Register Warga',
-      sublabel: 'Kelola data balita & ibu hamil',
+      label: 'Data Warga',
+      sublabel: 'Daftar balita & ibu hamil',
       icon: Users,
       badge: residents.length,
     },

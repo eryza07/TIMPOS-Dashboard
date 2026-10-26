@@ -18,14 +18,28 @@ export const AuthPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // State Form Login
-  const [loginEmail, setLoginEmail] = useState('');
+  // State Form Login & Ingat Perangkat Ini
+  const [rememberDevice, setRememberDevice] = useState(() => {
+    return localStorage.getItem('timpos_remember_device') !== 'false';
+  });
+
+  const [loginEmail, setLoginEmail] = useState(() => {
+    return localStorage.getItem('timpos_saved_email') || '';
+  });
   const [loginPassword, setLoginPassword] = useState('');
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setIsLoading(true);
+
+    if (rememberDevice) {
+      localStorage.setItem('timpos_remember_device', 'true');
+      localStorage.setItem('timpos_saved_email', loginEmail);
+    } else {
+      localStorage.setItem('timpos_remember_device', 'false');
+      localStorage.removeItem('timpos_saved_email');
+    }
 
     try {
       const res = await login(loginEmail, loginPassword);
@@ -123,6 +137,21 @@ export const AuthPage: React.FC = () => {
                     className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D5C46] focus:border-transparent text-slate-900"
                   />
                 </div>
+              </div>
+
+              {/* Checkbox Ingat Perangkat Ini */}
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none group">
+                  <input
+                    type="checkbox"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    className="w-4 h-4 text-[#0D5C46] rounded border-slate-300 focus:ring-[#0D5C46] accent-[#0D5C46] cursor-pointer"
+                  />
+                  <span className="text-xs text-slate-700 font-medium group-hover:text-slate-900 transition-colors">
+                    Ingat perangkat ini (tetap masuk)
+                  </span>
+                </label>
               </div>
 
               <button

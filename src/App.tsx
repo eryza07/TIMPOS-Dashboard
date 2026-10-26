@@ -226,7 +226,7 @@ function DashboardContent() {
         )}
 
         {/* ======================================================== */}
-        {/* MENU 3: BUKU REGISTER WARGA (DATA WARGA LENGKAP)         */}
+        {/* MENU 3: DATA WARGA (BALITA & IBU HAMIL LENGKAP)          */}
         {/* ======================================================== */}
         {activeTab === 'RESIDENTS' && (
           <div className="w-full animate-fadeIn">
