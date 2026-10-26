@@ -118,6 +118,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (savedUser && savedProfile && isMounted) {
           const parsedUser = JSON.parse(savedUser);
           const parsedProfile = JSON.parse(savedProfile);
+          
+          // Bersihkan jika masih tersisa sesi demo bawaan lama
+          if (
+            parsedUser?.email?.includes('posyandudigital.id') ||
+            parsedProfile?.id?.includes('melati-01') ||
+            parsedProfile?.id?.includes('mawar-02')
+          ) {
+            localStorage.removeItem(LOCAL_AUTH_KEY);
+            localStorage.removeItem(LOCAL_PROFILE_KEY);
+            setUser(null);
+            setProfile(null);
+            setAuthStatus('unauthenticated');
+            return;
+          }
+
           setUser(parsedUser);
           setProfile(parsedProfile);
           setAuthStatus('authenticated');

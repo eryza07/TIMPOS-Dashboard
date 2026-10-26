@@ -1,6 +1,7 @@
 import { Resident, MeasurementRecord, ResidentCategory } from '../types';
 
 const STORAGE_KEY = 'timpos_residents_data';
+const PURGE_FLAG_KEY = 'timpos_clean_purge_v3';
 
 // Data Warga Awal: Bersih / Kosong (Siap diisi data riil dari Supabase / Kader Posyandu)
 export const INITIAL_RESIDENTS: Resident[] = [];
@@ -10,6 +11,15 @@ export const INITIAL_RESIDENTS: Resident[] = [];
  */
 export const getStoredResidents = (): Resident[] => {
   try {
+    // 1. Auto-purge: Bersihkan cache demo lama di browser jika belum pernah dibersihkan
+    if (!localStorage.getItem(PURGE_FLAG_KEY)) {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('timpos_local_auth_user');
+      localStorage.removeItem('timpos_local_auth_profile');
+      localStorage.setItem(PURGE_FLAG_KEY, 'true');
+      return [];
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       return [];
@@ -18,6 +28,20 @@ export const getStoredResidents = (): Resident[] => {
     if (!Array.isArray(parsed)) {
       return [];
     }
+
+    // 2. Deteksi jika masih ada nama-nama warga demo bawaan lama, hapus otomatis
+    const hasOldDemo = parsed.some((r: any) => 
+      r.name === 'Ahmad Fauzan' || 
+      r.name === 'Siti Aisyah' || 
+      r.name === 'Kenzo Alfarezel' || 
+      r.name === 'Ibu Dewi Lestari' ||
+      r.name === 'Ibu Rina Anggraini'
+    );
+    if (hasOldDemo) {
+      localStorage.removeItem(STORAGE_KEY);
+      return [];
+    }
+
     return parsed;
   } catch (error) {
     console.warn('Gagal membaca data warga dari localStorage:', error);
