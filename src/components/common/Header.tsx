@@ -23,8 +23,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 py-3 flex items-center justify-between gap-4">
         {/* Brand / Logo Section */}
         <div className="flex items-center space-x-3.5 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-[#0D5C46] flex items-center justify-center text-white font-bold text-lg tracking-wider shadow-sm flex-shrink-0">
-            TP
+          <div className="w-10 h-10 rounded-xl bg-[#0D5C46] flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
+            <svg viewBox="0 0 48 48" className="w-full h-full" fill="none" aria-label="Logo TIMPOS">
+              <rect width="48" height="48" rx="12" fill="#0D5C46" />
+              <path d="M24 10v28M10 24h28" stroke="#FFFFFF" strokeWidth="4.5" strokeLinecap="round" />
+              <circle cx="24" cy="24" r="6" fill="#DCFCE7" />
+              <circle cx="24" cy="24" r="3" fill="#0D5C46" />
+            </svg>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
