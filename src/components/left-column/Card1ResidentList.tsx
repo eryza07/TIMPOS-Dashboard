@@ -106,11 +106,11 @@ export const Card1ResidentList: React.FC = () => {
             <Users className="w-4 h-4 text-[#0D5C46]" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 leading-none">
-              Data Warga Posyandu
+            <h2 className="text-base font-bold text-slate-900 leading-tight">
+              Daftar Pasien Posyandu
             </h2>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Daftar balita, ibu hamil, &amp; data pasien timbangan IoT
+            <p className="text-xs text-slate-500 mt-0.5">
+              Daftar seluruh balita &amp; ibu hamil Posyandu
             </p>
           </div>
         </div>

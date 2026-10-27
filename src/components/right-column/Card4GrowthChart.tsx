@@ -213,11 +213,11 @@ export const Card4GrowthChart: React.FC = () => {
             <TrendingUp className="w-4 h-4 text-[#0D5C46]" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 leading-none">
-              Kartu 4: Grafik Perkembangan Pasien
+            <h2 className="text-base font-bold text-slate-900 leading-tight">
+              Grafik Pertumbuhan Pasien
             </h2>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Kurva pertumbuhan bulanan &amp; acuan standar Kemenkes RI
+            <p className="text-xs text-slate-500 mt-0.5">
+              Catatan pertumbuhan bulanan sesuai acuan Kemenkes RI
             </p>
           </div>
         </div>

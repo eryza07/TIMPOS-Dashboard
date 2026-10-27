@@ -298,9 +298,9 @@ export const PosyanduProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const publishRemoteMeasure = useCallback((): boolean => {
     const success = mqttService.publishRemoteMeasure();
     if (success) {
-      showActionToast('Perintah REMOTE_MEASURE terkirim ke ESP32 Wokwi...');
+      showActionToast('Perintah REMOTE_MEASURE terkirim ke alat IoT ESP32...');
     } else {
-      showActionToast('Koneksi MQTT belum aktif. Menggunakan mode simulasi internal.');
+      showActionToast('Koneksi MQTT belum aktif. Silakan periksa koneksi broker.');
     }
     return success;
   }, []);

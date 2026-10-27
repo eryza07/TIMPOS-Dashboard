@@ -18,17 +18,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { profile, logout } = useAuth();
 
-  // Parsing host name for clean display
-  const getCleanBrokerName = (url: string) => {
-    try {
-      if (url.includes('hivemq')) return 'HiveMQ Public';
-      const parsed = new URL(url.replace('wss://', 'https://'));
-      return parsed.hostname;
-    } catch {
-      return 'Broker MQTT';
-    }
-  };
-
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 py-3 flex items-center justify-between gap-4">
@@ -54,58 +43,55 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Action / MQTT Status & Profile */}
         <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-          {/* MQTT Status Badge */}
+          {/* Status Koneksi Alat Timbangan (Bahasa Sederhana) */}
           <div 
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-semibold transition-colors cursor-pointer bg-slate-50"
             onClick={onOpenSettings}
-            title="Klik untuk membuka pengaturan MQTT"
+            title={`Status Koneksi Alat: ${connectionStatus} (${brokerHost})`}
           >
             {connectionStatus === 'connected' ? (
               <>
-                <span className="relative flex h-2.5 w-2.5">
+                <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
                 </span>
-                <span className="text-emerald-900 hidden sm:inline font-semibold">
-                  MQTT Terhubung
-                </span>
-                <span className="text-[11px] text-emerald-700 hidden md:inline">
-                  ({getCleanBrokerName(brokerHost)})
+                <span className="text-emerald-900 font-bold">
+                  Alat Terhubung
                 </span>
               </>
             ) : connectionStatus === 'connecting' ? (
               <>
-                <span className="relative flex h-2.5 w-2.5">
+                <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
                 </span>
-                <span className="text-amber-800 font-semibold">
-                  Menghubungkan...
+                <span className="text-amber-800 font-bold">
+                  Menyambungkan...
                 </span>
               </>
             ) : (
               <>
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-400"></span>
-                <span className="text-slate-600 hidden sm:inline">
-                  Mode Lokal (Offline)
+                <span className="h-3 w-3 rounded-full bg-slate-400"></span>
+                <span className="text-slate-600 font-semibold">
+                  Alat Offline
                 </span>
               </>
             )}
           </div>
 
-          {/* MQTT Settings Button */}
+          {/* Tombol Pengaturan Alat */}
           <button
             type="button"
             onClick={onOpenSettings}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:text-[#0D5C46] bg-slate-100 hover:bg-slate-200/80 active:scale-95 rounded-lg border border-slate-200 transition-all min-h-[40px]"
-            aria-label="Buka Pengaturan MQTT"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-[#0D5C46] bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl border border-slate-200 transition-all min-h-[42px]"
+            aria-label="Buka Pengaturan"
           >
             {connectionStatus === 'connected' ? (
               <Wifi className="w-4 h-4 text-[#0D5C46]" />
             ) : (
               <WifiOff className="w-4 h-4 text-slate-500" />
             )}
-            <span className="hidden sm:inline">Pengaturan MQTT</span>
+            <span className="hidden sm:inline">Pengaturan</span>
             <Settings className="w-3.5 h-3.5 text-slate-400 hidden sm:inline ml-0.5" />
           </button>
 

@@ -20,31 +20,28 @@ export const NavigationTabs: React.FC = () => {
   }[] = [
     {
       id: 'MEASUREMENT',
-      label: 'Meja Timbangan & IoT',
-      sublabel: 'Alat ukur live & simpan hasil',
+      label: 'Timbangan & Ukur',
+      sublabel: 'Ukur tinggi & berat badan',
       icon: Scale,
-      badge: 'Live',
     },
     {
       id: 'HISTORY',
-      label: 'Riwayat & Grafik Pasien',
-      sublabel: activeResident ? activeResident.name : 'Rekap data & kurva Kemenkes',
+      label: 'Riwayat & Grafik',
+      sublabel: activeResident ? `Pasien: ${activeResident.name}` : 'Grafik perkembangan anak',
       icon: TrendingUp,
-      badge: activeResident?.records.length ? `${activeResident.records.length} Data` : undefined,
+      badge: activeResident?.records.length ? `${activeResident.records.length}` : undefined,
     },
     {
       id: 'RESIDENTS',
-      label: 'Data Warga',
-      sublabel: 'Daftar balita & ibu hamil',
+      label: 'Daftar Pasien',
+      sublabel: `${residents.length} Balita & Ibu Hamil`,
       icon: Users,
-      badge: residents.length,
     },
     {
       id: 'AI_CONSULTATION',
-      label: 'Konsultasi AI',
-      sublabel: 'Asisten edukasi & stunting',
+      label: 'Tanya Bidan',
+      sublabel: 'Konsultasi gizi & saran',
       icon: Sparkles,
-      badge: 'Beta',
     },
   ];
 

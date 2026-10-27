@@ -38,12 +38,12 @@ export const Card5AiConsultation: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-900 leading-none">
-                Kartu 5: Tanya AI — Asisten Konsultasi Gizi &amp; Kehamilan
+              <h2 className="text-base font-bold text-slate-900 leading-tight">
+                Tanya Bidan (Asisten Posyandu)
               </h2>
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Panduan interaktif kader untuk konsultasi keluarga warga binaan
+            <p className="text-xs text-slate-500 mt-0.5">
+              Panduan informasi gizi balita &amp; perawatan ibu hamil
             </p>
           </div>
         </div>
@@ -87,8 +87,8 @@ export const Card5AiConsultation: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <p className="text-[11px] text-slate-400 italic">
-            *Modul UI mockup aman bebas konfigurasi API Key eksternal.
+          <p className="text-xs text-slate-500 italic">
+            *Panduan edukasi gizi &amp; kesehatan Posyandu.
           </p>
           <button
             type="submit"
