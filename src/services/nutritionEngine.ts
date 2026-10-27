@@ -259,7 +259,7 @@ export const evaluateNutritionStatus = (
   return {
     status: 'NORMAL',
     title: 'Kondisi Fisik & Kehamilan Ideal',
-    summary: `Tinggi Badan (${tb_cm} cm $\\ge$ 145 cm), Berat Badan (${bb_kg} kg), dan IMT (${bmi}) berada pada rentang ideal Trimester ${limits.trimester} (Minggu ke-${ageValue}).`,
+    summary: `Tinggi Badan (${tb_cm} cm ≥ 145 cm), Berat Badan (${bb_kg} kg), dan IMT (${bmi}) berada pada rentang ideal Trimester ${limits.trimester} (Minggu ke-${ageValue}).`,
     detail: 'Kondisi kesehatan ibu dan janin terpantau optimal. Lanjutkan konsumsi tablet tambah darah (TTD), asam folat, kalsium, dan olahraga prenatal ringan.',
     badgeClass: 'bg-green-800 text-white',
     cardClass: 'bg-green-100 text-green-900 border-green-400',
