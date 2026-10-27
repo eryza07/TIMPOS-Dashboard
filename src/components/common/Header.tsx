@@ -51,28 +51,28 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {connectionStatus === 'connected' ? (
               <>
-                <span className="relative flex h-3 w-3">
+                <span className="relative flex h-3 w-3 flex-shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
                 </span>
-                <span className="text-emerald-900 font-bold">
+                <span className="text-emerald-900 font-bold hidden sm:inline">
                   Alat Terhubung
                 </span>
               </>
             ) : connectionStatus === 'connecting' ? (
               <>
-                <span className="relative flex h-3 w-3">
+                <span className="relative flex h-3 w-3 flex-shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
                 </span>
-                <span className="text-amber-800 font-bold">
+                <span className="text-amber-800 font-bold hidden sm:inline">
                   Menyambungkan...
                 </span>
               </>
             ) : (
               <>
-                <span className="h-3 w-3 rounded-full bg-slate-400"></span>
-                <span className="text-slate-600 font-semibold">
+                <span className="h-3 w-3 rounded-full bg-slate-400 flex-shrink-0"></span>
+                <span className="text-slate-600 font-semibold hidden sm:inline">
                   Alat Offline
                 </span>
               </>

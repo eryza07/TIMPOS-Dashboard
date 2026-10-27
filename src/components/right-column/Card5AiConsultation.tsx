@@ -66,7 +66,7 @@ export const Card5AiConsultation: React.FC = () => {
               key={`ai-chip-${idx}`}
               type="button"
               onClick={() => handleSelectChip(item)}
-              className="text-left text-xs px-2.5 py-1.5 bg-slate-50 hover:bg-emerald-50/70 hover:text-[#0D5C46] text-slate-700 rounded-lg border border-slate-200 hover:border-emerald-200 transition-colors"
+              className="text-left text-xs px-3 py-2 bg-slate-50 hover:bg-emerald-50/70 hover:text-[#0D5C46] text-slate-700 rounded-xl border border-slate-200 hover:border-emerald-200 transition-colors max-w-full break-words leading-relaxed"
             >
               &ldquo;{item}&rdquo;
             </button>
@@ -92,7 +92,7 @@ export const Card5AiConsultation: React.FC = () => {
           </p>
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] active:scale-95 rounded-lg shadow-sm transition-all min-h-[40px]"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] active:scale-95 rounded-lg shadow-sm transition-all min-h-[40px] flex-shrink-0"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Tanya AI</span>
@@ -102,7 +102,7 @@ export const Card5AiConsultation: React.FC = () => {
 
       {/* Kotak Respon Mockup Informatif */}
       {showResponse && (
-        <div className="mt-4 p-4 bg-emerald-50/80 border border-emerald-300 rounded-xl animate-fadeIn relative">
+        <div className="mt-4 p-4 bg-emerald-50/80 border border-emerald-300 rounded-2xl animate-fadeIn relative overflow-hidden">
           <button
             type="button"
             onClick={() => setShowResponse(false)}

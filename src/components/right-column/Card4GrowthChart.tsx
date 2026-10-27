@@ -252,7 +252,7 @@ export const Card4GrowthChart: React.FC = () => {
       </div>
 
       {/* Kontainer Plotly Chart */}
-      <div className="mt-2 w-full relative">
+      <div className="mt-2 w-full relative overflow-hidden rounded-xl">
         {(!activeResident || activeResident.records.length === 0) && (
           <div className="w-full h-[320px] sm:h-[350px] flex flex-col items-center justify-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-center p-6">
             <TrendingUp className="w-10 h-10 text-slate-300 mb-2" />
