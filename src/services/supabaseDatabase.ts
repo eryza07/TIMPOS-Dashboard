@@ -13,10 +13,9 @@ import {
 export async function getResidentsData(posyanduId?: string): Promise<Resident[]> {
   const localList = getStoredResidents();
 
-  // Hanya query ke Supabase jika posyanduId valid UUID (bukan id dummy lokal)
-  if (isSupabaseConfigured && supabase && posyanduId && isValidUUID(posyanduId)) {
+  if (isSupabaseConfigured && supabase) {
     try {
-      const { data: residentsData, error: resErr } = await supabase
+      let query = supabase
         .from('residents')
         .select(`
           id,
@@ -27,12 +26,16 @@ export async function getResidentsData(posyanduId?: string): Promise<Resident[]>
           created_at,
           last_measured_date,
           measurements (*)
-        `)
-        .eq('posyandu_id', posyanduId)
-        .order('name');
+        `);
+
+      if (posyanduId && isValidUUID(posyanduId)) {
+        query = query.eq('posyandu_id', posyanduId);
+      }
+
+      const { data: residentsData, error: resErr } = await query.order('name');
 
       if (resErr) {
-        console.warn('[DB] Gagal ambil residents dari Supabase, pakai local:', resErr);
+        console.warn('[DB] Gagal ambil residents dari Supabase, pakai local:', resErr.message);
       } else if (residentsData) {
         if (residentsData.length > 0) {
           const mapped: Resident[] = residentsData.map((r: any) => ({
@@ -87,25 +90,30 @@ export async function createResidentRecord(
   posyanduId: string | undefined,
   resident: Resident
 ): Promise<Resident> {
-  if (isSupabaseConfigured && supabase && posyanduId && isValidUUID(posyanduId)) {
+  if (isSupabaseConfigured && supabase) {
     try {
-      const { error: resErr } = await supabase.from('residents').insert({
+      const payload: any = {
         id: resident.id,
-        posyandu_id: posyanduId,
         name: resident.name,
         category: resident.category,
         age_value: resident.ageValue,
         guardian_name: resident.guardianName,
         created_at: resident.createdAt,
         last_measured_date: resident.lastMeasuredDate,
-      });
+      };
+
+      if (posyanduId && isValidUUID(posyanduId)) {
+        payload.posyandu_id = posyanduId;
+      }
+
+      const { error: resErr } = await supabase.from('residents').insert(payload);
 
       if (resErr) {
-        console.error('[DB] Gagal insert warga ke Supabase:', resErr);
+        console.error('[DB] Gagal insert warga ke Supabase:', resErr.message, resErr);
       }
 
       // Masukkan pengukuran perdana jika ada
-      if (resident.records.length > 0) {
+      if (resident.records && resident.records.length > 0) {
         const rec = resident.records[0];
         await supabase.from('measurements').insert({
           id: rec.id,
@@ -129,7 +137,7 @@ export async function createResidentRecord(
 }
 
 /**
- * Menambahkan catatan ukur baru ke Supabase & Local
+ * Menambahkan catatan ukur baru ke Supabase
  */
 export async function addMeasurementRecord(
   residentId: string,
@@ -159,8 +167,6 @@ export async function addMeasurementRecord(
       console.error('[DB] Exception saving measurement to Supabase:', e);
     }
   }
-
-  // Pengukuran sudah disimpan ke local storage oleh PosyanduContext, tidak perlu appendLocalMeasurement lagi
 }
 
 /**
