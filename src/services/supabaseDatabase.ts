@@ -1,10 +1,8 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase, isSupabaseConfigured, isValidUUID } from './supabaseClient';
 import { Resident, MeasurementRecord, ResidentCategory } from '../types';
 import { 
   getStoredResidents, 
   saveStoredResidents, 
-  addNewResident as addLocalResident, 
-  appendMeasurementToResident as appendLocalMeasurement,
   deleteStoredResident as deleteLocalResident
 } from './storageService';
 
@@ -13,7 +11,10 @@ import {
  * Mengambil daftar warga posyandu dari Supabase (atau fallback ke local storage)
  */
 export async function getResidentsData(posyanduId?: string): Promise<Resident[]> {
-  if (isSupabaseConfigured && supabase && posyanduId) {
+  const localList = getStoredResidents();
+
+  // Hanya query ke Supabase jika posyanduId valid UUID (bukan id dummy lokal)
+  if (isSupabaseConfigured && supabase && posyanduId && isValidUUID(posyanduId)) {
     try {
       const { data: residentsData, error: resErr } = await supabase
         .from('residents')
@@ -33,47 +34,60 @@ export async function getResidentsData(posyanduId?: string): Promise<Resident[]>
       if (resErr) {
         console.warn('[DB] Gagal ambil residents dari Supabase, pakai local:', resErr);
       } else if (residentsData) {
-        const mapped: Resident[] = residentsData.map((r: any) => ({
-          id: r.id,
-          name: r.name,
-          category: r.category as ResidentCategory,
-          ageValue: Number(r.age_value),
-          guardianName: r.guardian_name,
-          createdAt: r.created_at,
-          lastMeasuredDate: r.last_measured_date,
-          records: (r.measurements || []).map((m: any) => ({
-            id: m.id,
-            date: m.date,
-            periodLabel: m.period_label,
-            ageValue: Number(m.age_value),
-            ageLabel: m.age_label,
-            tb_cm: Number(m.tb_cm),
-            bb_kg: Number(m.bb_kg),
-            status: m.status,
-            statusNote: m.status_note,
-          })).sort((a: MeasurementRecord, b: MeasurementRecord) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-        }));
+        if (residentsData.length > 0) {
+          const mapped: Resident[] = residentsData.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            category: r.category as ResidentCategory,
+            ageValue: Number(r.age_value),
+            guardianName: r.guardian_name,
+            createdAt: r.created_at,
+            lastMeasuredDate: r.last_measured_date,
+            records: (r.measurements || []).map((m: any) => ({
+              id: m.id,
+              date: m.date,
+              periodLabel: m.period_label,
+              ageValue: Number(m.age_value),
+              ageLabel: m.age_label,
+              tb_cm: Number(m.tb_cm),
+              bb_kg: Number(m.bb_kg),
+              status: m.status,
+              statusNote: m.status_note,
+            })).sort((a: MeasurementRecord, b: MeasurementRecord) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+          }));
 
-        // Simpan salinan ke localStorage untuk offline cache
-        saveStoredResidents(mapped);
-        return mapped;
+          // Simpan salinan ke localStorage untuk offline cache
+          saveStoredResidents(mapped);
+          return mapped;
+        } else {
+          // Supabase belum memiliki data untuk profil ini.
+          // JANGAN menimpa localStorage jika di lokal sudah ada data warga!
+          // Sinkronkan data warga lokal yang ada ke cloud Supabase.
+          if (localList.length > 0) {
+            console.info('[DB] Mensinkronkan data warga lokal ke cloud Supabase...');
+            for (const item of localList) {
+              createResidentRecord(posyanduId, item).catch(() => {});
+            }
+          }
+          return localList;
+        }
       }
     } catch (e) {
       console.error('[DB] Exception saat query Supabase:', e);
     }
   }
 
-  return getStoredResidents();
+  return localList;
 }
 
 /**
- * Menyimpan warga baru ke Supabase & Local
+ * Menyimpan warga baru ke Supabase
  */
 export async function createResidentRecord(
   posyanduId: string | undefined,
   resident: Resident
 ): Promise<Resident> {
-  if (isSupabaseConfigured && supabase && posyanduId) {
+  if (isSupabaseConfigured && supabase && posyanduId && isValidUUID(posyanduId)) {
     try {
       const { error: resErr } = await supabase.from('residents').insert({
         id: resident.id,
@@ -107,19 +121,9 @@ export async function createResidentRecord(
         });
       }
     } catch (e) {
-      console.error('[DB] Exception creating resident:', e);
+      console.error('[DB] Exception creating resident in Supabase:', e);
     }
   }
-
-  // Tetap sinkronkan ke local
-  addLocalResident({
-    name: resident.name,
-    category: resident.category,
-    ageValue: resident.ageValue,
-    guardianName: resident.guardianName,
-    initialTb: resident.records[0]?.tb_cm || 0,
-    initialBb: resident.records[0]?.bb_kg || 0,
-  });
 
   return resident;
 }
@@ -156,7 +160,7 @@ export async function addMeasurementRecord(
     }
   }
 
-  appendLocalMeasurement(residentId, record);
+  // Pengukuran sudah disimpan ke local storage oleh PosyanduContext, tidak perlu appendLocalMeasurement lagi
 }
 
 /**

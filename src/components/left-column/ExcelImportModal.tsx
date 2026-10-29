@@ -168,9 +168,16 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
 
   // 4. Konfirmasi Simpan Seluruh Warga ke Database
   const handleConfirmImport = () => {
-    if (parsedRows.length === 0) return;
-    onImportSuccess(parsedRows);
-    onClose();
+    if (parsedRows.length === 0 || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      onImportSuccess(parsedRows);
+      onClose();
+    } finally {
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 500);
+    }
   };
 
   return (

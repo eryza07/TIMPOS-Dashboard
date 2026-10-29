@@ -31,10 +31,13 @@
 
 /* Pulse animation for active MQTT indicator */
 @keyframes mqtt-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.4;
     transform: scale(1.15);

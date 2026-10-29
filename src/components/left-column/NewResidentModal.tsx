@@ -26,6 +26,7 @@ export const NewResidentModal: React.FC<NewResidentModalProps> = ({
   const [guardianName, setGuardianName] = useState('');
   const [initialTb, setInitialTb] = useState<number>(85);
   const [initialBb, setInitialBb] = useState<number>(12);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -44,21 +45,28 @@ export const NewResidentModal: React.FC<NewResidentModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isSubmitting) return;
 
-    onSubmit({
-      name: name.trim(),
-      category,
-      ageValue: Number(ageValue),
-      guardianName: guardianName.trim() || (category === 'BALITA' ? 'Ibu / Wali' : 'Suami'),
-      initialTb: Number(initialTb),
-      initialBb: Number(initialBb),
-    });
+    setIsSubmitting(true);
+    try {
+      onSubmit({
+        name: name.trim(),
+        category,
+        ageValue: Number(ageValue),
+        guardianName: guardianName.trim() || (category === 'BALITA' ? 'Ibu / Wali' : 'Suami'),
+        initialTb: Number(initialTb),
+        initialBb: Number(initialBb),
+      });
 
-    // Reset form
-    setName('');
-    setGuardianName('');
-    onClose();
+      // Reset form
+      setName('');
+      setGuardianName('');
+      onClose();
+    } finally {
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 400);
+    }
   };
 
   return (
@@ -231,10 +239,11 @@ export const NewResidentModal: React.FC<NewResidentModalProps> = ({
             </button>
             <button
               type="submit"
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] active:scale-[0.98] rounded-lg shadow-sm transition-all min-h-[44px]"
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#0D5C46] hover:bg-[#094434] active:scale-[0.98] rounded-lg shadow-sm transition-all min-h-[44px] disabled:opacity-50"
             >
               <UserPlus className="w-4 h-4" />
-              Daftarkan Warga
+              {isSubmitting ? 'Mendaftarkan...' : 'Daftarkan Warga'}
             </button>
           </div>
         </form>

@@ -7,7 +7,59 @@ const PURGE_FLAG_KEY = 'timpos_clean_purge_v3';
 export const INITIAL_RESIDENTS: Resident[] = [];
 
 /**
- * Mengambil daftar seluruh warga dari localStorage.
+ * Membersihkan data duplikat secara otomatis (baik warga kembar maupun riwayat ukur kembar)
+ */
+export function deduplicateResidents(list: Resident[]): Resident[] {
+  if (!Array.isArray(list) || list.length === 0) return [];
+
+  const seenIds = new Set<string>();
+  const seenTwinKeys = new Set<string>();
+  const cleaned: Resident[] = [];
+
+  for (const resident of list) {
+    if (!resident || !resident.id) continue;
+
+    // 1. Cek duplikasi berdasarkan ID
+    if (seenIds.has(resident.id)) {
+      continue;
+    }
+
+    // 2. Cek duplikasi warga kembar (nama sama, kategori sama, wali sama)
+    const normalizedName = (resident.name || '').trim().toLowerCase();
+    const normalizedGuardian = (resident.guardianName || '').trim().toLowerCase();
+    const twinKey = `${normalizedName}|${resident.category}|${normalizedGuardian}`;
+
+    if (seenTwinKeys.has(twinKey)) {
+      continue;
+    }
+
+    seenIds.add(resident.id);
+    seenTwinKeys.add(twinKey);
+
+    // 3. Bersihkan duplikasi di dalam array records pengukuran warga ini
+    const cleanedRecords: MeasurementRecord[] = [];
+    const seenRecordKeys = new Set<string>();
+
+    for (const rec of (resident.records || [])) {
+      if (!rec) continue;
+      const recKey = `${rec.date}|${rec.tb_cm}|${rec.bb_kg}|${rec.periodLabel || ''}`;
+      if (!seenRecordKeys.has(recKey)) {
+        seenRecordKeys.add(recKey);
+        cleanedRecords.push(rec);
+      }
+    }
+
+    cleaned.push({
+      ...resident,
+      records: cleanedRecords,
+    });
+  }
+
+  return cleaned;
+}
+
+/**
+ * Mengambil daftar seluruh warga dari localStorage dengan auto-deduplikasi.
  */
 export const getStoredResidents = (): Resident[] => {
   try {
@@ -29,20 +81,13 @@ export const getStoredResidents = (): Resident[] => {
       return [];
     }
 
-    // 2. Deteksi jika masih ada nama-nama warga demo bawaan lama, hapus otomatis
-    const hasOldDemo = parsed.some((r: any) => 
-      r.name === 'Ahmad Fauzan' || 
-      r.name === 'Siti Aisyah' || 
-      r.name === 'Kenzo Alfarezel' || 
-      r.name === 'Ibu Dewi Lestari' ||
-      r.name === 'Ibu Rina Anggraini'
-    );
-    if (hasOldDemo) {
-      localStorage.removeItem(STORAGE_KEY);
-      return [];
+    // 2. Bersihkan otomatis jika ada sisa data ganda/duplikat
+    const deduped = deduplicateResidents(parsed);
+    if (deduped.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(deduped));
     }
 
-    return parsed;
+    return deduped;
   } catch (error) {
     console.warn('Gagal membaca data warga dari localStorage:', error);
     return [];
@@ -54,7 +99,8 @@ export const getStoredResidents = (): Resident[] => {
  */
 export const saveStoredResidents = (residents: Resident[]): void => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(residents));
+    const deduped = deduplicateResidents(residents);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(deduped));
   } catch (error) {
     console.error('Gagal menyimpan data warga ke localStorage:', error);
   }
@@ -72,11 +118,31 @@ export const addNewResident = (newResidentData: {
   initialBb: number;
 }): Resident => {
   const currentList = getStoredResidents();
+
+  // Cegah penambahan ganda jika warga dengan nama & wali yang sama persis sudah ada
+  const trimmedName = newResidentData.name.trim().toLowerCase();
+  const trimmedGuardian = newResidentData.guardianName.trim().toLowerCase();
+  const existingTwin = currentList.find(
+    (r) =>
+      r.category === newResidentData.category &&
+      r.name.trim().toLowerCase() === trimmedName &&
+      r.guardianName.trim().toLowerCase() === trimmedGuardian
+  );
+  if (existingTwin) {
+    console.warn('[Storage] Warga kembar terdeteksi, menggunakan entri yang sudah ada:', existingTwin.id);
+    return existingTwin;
+  }
   
-  // Menghasilkan ID unik seperti BLT-01 atau BML-01
+  // Menghasilkan ID unik seperti BLT-01 atau BML-01 berdasarkan angka maksimum yang ada
   const prefix = newResidentData.category === 'BALITA' ? 'BLT' : 'BML';
-  const existingCount = currentList.filter((r) => r.category === newResidentData.category).length;
-  const newId = `${prefix}-${String(existingCount + 1).padStart(2, '0')}`;
+  const existingNums = currentList
+    .filter((r) => r.category === newResidentData.category && r.id.startsWith(prefix))
+    .map((r) => {
+      const match = r.id.match(new RegExp(`^${prefix}-(\\d+)`));
+      return match ? parseInt(match[1], 10) : 0;
+    });
+  const nextNum = existingNums.length > 0 ? Math.max(...existingNums, 0) + 1 : 1;
+  const newId = `${prefix}-${String(nextNum).padStart(2, '0')}`;
   
   const today = new Date().toISOString().split('T')[0];
   const ageLabel = newResidentData.category === 'BALITA' 
@@ -97,16 +163,16 @@ export const addNewResident = (newResidentData: {
 
   const newResident: Resident = {
     id: newId,
-    name: newResidentData.name,
+    name: newResidentData.name.trim(),
     category: newResidentData.category,
     ageValue: newResidentData.ageValue,
-    guardianName: newResidentData.guardianName,
+    guardianName: newResidentData.guardianName.trim(),
     createdAt: today,
     lastMeasuredDate: today,
     records: [initialRecord],
   };
 
-  const updatedList = [newResident, ...currentList];
+  const updatedList = deduplicateResidents([newResident, ...currentList]);
   saveStoredResidents(updatedList);
   return newResident;
 };
@@ -126,19 +192,27 @@ export const bulkAddStoredResidents = (newResidentsData: {
   const today = new Date().toISOString().split('T')[0];
 
   const addedList: Resident[] = [];
-  let existingBalitaCount = currentList.filter((r) => r.category === 'BALITA').length;
-  let existingIbuCount = currentList.filter((r) => r.category === 'IBU_HAMIL').length;
+  const balitaNums = currentList
+    .filter((r) => r.category === 'BALITA' && r.id.startsWith('BLT'))
+    .map((r) => {
+      const match = r.id.match(/^BLT-(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+  let nextBalitaNum = balitaNums.length > 0 ? Math.max(...balitaNums, 0) + 1 : 1;
+
+  const ibuNums = currentList
+    .filter((r) => r.category === 'IBU_HAMIL' && r.id.startsWith('BML'))
+    .map((r) => {
+      const match = r.id.match(/^BML-(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+  let nextIbuNum = ibuNums.length > 0 ? Math.max(...ibuNums, 0) + 1 : 1;
 
   for (const item of newResidentsData) {
     const isBalita = item.category === 'BALITA';
     const prefix = isBalita ? 'BLT' : 'BML';
-    if (isBalita) {
-      existingBalitaCount++;
-    } else {
-      existingIbuCount++;
-    }
-    const count = isBalita ? existingBalitaCount : existingIbuCount;
-    const newId = `${prefix}-${String(count).padStart(2, '0')}`;
+    const num = isBalita ? nextBalitaNum++ : nextIbuNum++;
+    const newId = `${prefix}-${String(num).padStart(2, '0')}`;
 
     const ageLabel = isBalita ? `${item.ageValue} Thn` : `${item.ageValue} Mgg`;
     const initialRecord: MeasurementRecord = {
@@ -155,10 +229,10 @@ export const bulkAddStoredResidents = (newResidentsData: {
 
     const newResident: Resident = {
       id: newId,
-      name: item.name,
+      name: item.name.trim(),
       category: item.category,
       ageValue: item.ageValue,
-      guardianName: item.guardianName,
+      guardianName: item.guardianName.trim(),
       createdAt: today,
       lastMeasuredDate: today,
       records: [initialRecord],
@@ -167,7 +241,7 @@ export const bulkAddStoredResidents = (newResidentsData: {
     addedList.push(newResident);
   }
 
-  const updatedList = [...addedList, ...currentList];
+  const updatedList = deduplicateResidents([...addedList, ...currentList]);
   saveStoredResidents(updatedList);
   return addedList;
 };
@@ -182,6 +256,14 @@ export const appendMeasurementToResident = (
   const currentList = getStoredResidents();
   const updatedList = currentList.map((res) => {
     if (res.id !== residentId) return res;
+
+    // Cek apakah rekaman ukur dengan tanggal & hasil ukur yang sama persis sudah ada
+    const isDuplicateRec = res.records.some(
+      (r) => r.date === record.date && r.tb_cm === record.tb_cm && r.bb_kg === record.bb_kg
+    );
+    if (isDuplicateRec) {
+      return res;
+    }
 
     const newRecord: MeasurementRecord = {
       ...record,
@@ -212,6 +294,7 @@ export const resetResidentsToDefault = (): Resident[] => {
  * Menghapus satu warga berdasarkan ID.
  */
 export const deleteStoredResident = (residentId: string): Resident[] => {
+  if (!residentId) return getStoredResidents();
   const currentList = getStoredResidents();
   const updatedList = currentList.filter((r) => r.id !== residentId);
   saveStoredResidents(updatedList);

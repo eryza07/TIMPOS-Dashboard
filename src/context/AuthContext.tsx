@@ -74,27 +74,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .eq('user_id', session.user.id)
               .single();
 
-            const userProfile: PosyanduProfile = profileData ? {
-              id: profileData.id,
-              userId: profileData.user_id,
-              posyanduName: profileData.posyandu_name,
-              kaderName: profileData.kader_name,
-              rtRw: profileData.rt_rw,
-              desaKelurahan: profileData.desa_kelurahan,
-              puskesmasPembina: profileData.puskesmas_pembina,
-              mqttTopicData: profileData.mqtt_topic_data || 'sic8/timpos/data',
-              mqttTopicCommand: profileData.mqtt_topic_command || 'sic8/timpos/command',
-            } : {
-              id: session.user.id,
-              userId: session.user.id,
-              posyanduName: 'Posyandu Kader',
-              kaderName: session.user.email?.split('@')[0] || 'Kader',
-              rtRw: 'RT 01 / RW 01',
-              desaKelurahan: 'Desa Sejahtera',
-              puskesmasPembina: 'Puskesmas Kecamatan',
-              mqttTopicData: 'sic8/timpos/data',
-              mqttTopicCommand: 'sic8/timpos/command',
-            };
+            let userProfile: PosyanduProfile;
+            if (profileData) {
+              userProfile = {
+                id: profileData.id,
+                userId: profileData.user_id,
+                posyanduName: profileData.posyandu_name,
+                kaderName: profileData.kader_name,
+                rtRw: profileData.rt_rw,
+                desaKelurahan: profileData.desa_kelurahan,
+                puskesmasPembina: profileData.puskesmas_pembina,
+                mqttTopicData: profileData.mqtt_topic_data || 'sic8/timpos/data',
+                mqttTopicCommand: profileData.mqtt_topic_command || 'sic8/timpos/command',
+              };
+            } else {
+              // Jika profil belum ada di posyandu_profiles, buat otomatis sekarang agar relasi UUID valid
+              const newPosyanduName = session.user.user_metadata?.posyandu_name || 'Posyandu Kader';
+              const newKaderName = session.user.user_metadata?.kader_name || session.user.email?.split('@')[0] || 'Kader';
+              
+              const { data: createdProf } = await supabase
+                .from('posyandu_profiles')
+                .insert({
+                  user_id: session.user.id,
+                  posyandu_name: newPosyanduName,
+                  kader_name: newKaderName,
+                  rt_rw: 'RT 01 / RW 01',
+                  desa_kelurahan: 'Desa Sejahtera',
+                  puskesmas_pembina: 'Puskesmas Pembina',
+                  mqtt_topic_data: 'sic8/timpos/data',
+                  mqtt_topic_command: 'sic8/timpos/command',
+                })
+                .select()
+                .single();
+
+              if (createdProf) {
+                userProfile = {
+                  id: createdProf.id,
+                  userId: createdProf.user_id,
+                  posyanduName: createdProf.posyandu_name,
+                  kaderName: createdProf.kader_name,
+                  rtRw: createdProf.rt_rw,
+                  desaKelurahan: createdProf.desa_kelurahan,
+                  puskesmasPembina: createdProf.puskesmas_pembina,
+                  mqttTopicData: createdProf.mqtt_topic_data || 'sic8/timpos/data',
+                  mqttTopicCommand: createdProf.mqtt_topic_command || 'sic8/timpos/command',
+                };
+              } else {
+                userProfile = {
+                  id: session.user.id,
+                  userId: session.user.id,
+                  posyanduName: newPosyanduName,
+                  kaderName: newKaderName,
+                  rtRw: 'RT 01 / RW 01',
+                  desaKelurahan: 'Desa Sejahtera',
+                  puskesmasPembina: 'Puskesmas Kecamatan',
+                  mqttTopicData: 'sic8/timpos/data',
+                  mqttTopicCommand: 'sic8/timpos/command',
+                };
+              }
+            }
 
             setUser({
               id: session.user.id,
